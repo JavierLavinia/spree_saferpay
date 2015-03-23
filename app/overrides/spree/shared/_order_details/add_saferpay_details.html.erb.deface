@@ -1,0 +1,9 @@
+<!--
+  insert_bottom '.payment-info'
+-->
+<% if order.payment && order.payment.source_type.to_s.include?('Saferpay') %>
+    <span class="cc-type">
+    <%= image_tag 'creditcards/creditcard.gif', :id => 'creditcard-saferpay' %>
+      <%= t("payment_states.#{order.payment.state}") %>
+    </span>
+<% end %>
