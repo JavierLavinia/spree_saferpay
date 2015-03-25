@@ -20,13 +20,15 @@ class Spree::BillingIntegration::SaferpayPayment < Spree::BillingIntegration
     false
   end
 
-  def capture(payment_or_amount, account_or_response_code, gateway_options)
-    if payment_or_amount.is_a?(Spree::Payment)
-      authorization = find_authorization(payment_or_amount)
-      provider.capture(amount_in_cents(payment_or_amount.amount), authorization.params["transaction_id"], :currency => preferred_currency)
-    else
-      provider.capture(payment_or_amount, account_or_response_code, :currency => preferred_currency)
-    end
+  def payment_url(order, url_options = {})
+    payment_options = {
+      amount: amount_in_cents(order.total),
+      currency: preferred_currency,
+      description: "Order #{order.number}",
+      langid: I18n.locale,
+      orderid: order.number
+    }.merge url_options
+    provider.get_payment_url(payment_options)
   end
 
   def credit(*args)
