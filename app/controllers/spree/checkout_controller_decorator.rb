@@ -62,23 +62,18 @@ module Spree
       end
 
       load_order
-      @payment_method = Spree::PaymentMethod.find(params[:order][:payments_attributes].first[:payment_method_id])
+
+      if @order.errors.any?
+        render :edit and return
+      end
+
+      payment_method_id = params[:order][:payments_attributes].first[:payment_method_id]
+      @payment_method = Spree::PaymentMethod.find(payment_method_id)
 
       if @payment_method.kind_of?(Spree::BillingIntegration::SaferpayPayment)
-
-        @payment_method.provider_class::Helper.credentials = saferpay_credentials(payment_method)
-        #set_cache_buster
-        render 'spree/shared/_saferpay_payment_checkout', :layout => 'application'
+        order_url_options = order_url_options(@order, payment_method_id)
+        redirect_to @payment_method.payment_url(@order, order_url_options)
       end
-    end
-
-    def saferpay_credentials (payment_method)
-      {
-          :terminal_id   => payment_method.preferred_terminal_id,
-          :commercial_id => payment_method.preferred_commercial_id,
-          :secret_key    => payment_method.preferred_secret_key,
-          :key_type      => payment_method.preferred_key_type
-      }
     end
 
     def user_locale
@@ -87,6 +82,15 @@ module Spree
 
     def saferpay_gateway
       payment_method.provider
+    end
+
+    def order_url_options order, payment_method_id
+      {
+        successlink: saferpay_notify_order_checkout_url(order, payment_method_id: payment_method_id),
+        faillink: edit_order_checkout_url(order, state: :payment),
+        backlink: edit_order_checkout_url(order, state: :payment),
+        notifyurl: saferpay_confirm_order_checkout_url(order, state: :payment)
+      }
     end
 
     def set_cache_buster
