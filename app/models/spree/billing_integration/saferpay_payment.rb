@@ -59,7 +59,7 @@ class Spree::BillingIntegration::SaferpayPayment < Spree::BillingIntegration
   end
 
   def amount_in_cents(amount)
-    (100 * amount).to_i
+    (100 * amount.to_f).to_i
   end
 
 end
