@@ -21,7 +21,7 @@ module SpreeSaferpay
 
     initializer "spree_saferpay.register.payment_methods", :after => 'spree.register.payment_methods' do |app|
       app.config.spree.payment_methods += [
-          Spree::BillingIntegration::SaferpayPayment
+        Spree::BillingIntegration::SaferpayPayment
       ]
     end
   end

@@ -1,7 +1,7 @@
 Spree::Core::Engine.routes.draw do
 
   resources :orders do
-    resource :checkout, controller: 'checkout' do
+    resource :checkout, controller: :checkout do
       member do
         get :saferpay_checkout
         get :saferpay_payment

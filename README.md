@@ -1,7 +1,7 @@
 SpreeSaferpay
 ============
 
-Basic support for the Spanish Saferpay “TPV Virtual” Spree::BillingIntegration,  Spree 1.2.X compatible
+Basic support for the Saferpay Virtual TPV,  Spree 1.2.X compatible
 
 Based on https://github.com/picazoH/spree_sermepa Library by @picazoH
 
