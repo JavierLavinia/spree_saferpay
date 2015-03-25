@@ -1,16 +1,19 @@
 class Spree::BillingIntegration::SaferpayPayment < Spree::BillingIntegration
-  preference :commercial_id, :string
-  preference :notify_url, :string, :default => 'https://sis-t.saferpay.es:25443/sis/realizarPago'
-  preference :terminal_id, :integer, :default => 1
-  preference :currency, :string, :default => 'EUR'
-  preference :secret_key, :string
-  preference :key_type, :string, :default => 'sha1_extended' #sabadell is sha1_extended but can be sha1_complete
+  preference :endpoint, :string, default: ::Saferpay::Configuration::DEFAULTS[:endpoint]
+  preference :user_agent, :string, default: ::Saferpay::Configuration::DEFAULTS[:user_agent]
+  preference :account_id, :string, default: ::Saferpay::Configuration::DEFAULTS[:account_id]
+  preference :currency, :string, default: "EUR"
 
-  attr_accessible :preferred_commercial_id, :preferred_notify_url, :preferred_terminal_id, :preferred_currency,
-                  :preferred_secret_key, :preferred_key_type, :preferred_server, :preferred_test_mode
+  attr_accessible :preferred_endpoint, :preferred_user_agent,
+                  :preferred_account_id, :preferred_currency,
+                  :preferred_server, :preferred_test_mode
 
   def provider_class
-    ActiveMerchant::Billing::Integrations::Saferpay
+    ::Saferpay::API
+  end
+
+  def provider
+    @provider ||= provider_class.new
   end
 
   def payment_profiles_supported?
