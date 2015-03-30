@@ -40,7 +40,7 @@ module Spree
 
     # create the gateway from the supplied options
     def payment_method
-      @payment_method ||= Spree::PaymentMethod.find(params[:payment_method_id])
+      @payment_method ||= Spree::PaymentMethod.find(params[:payment_method_id]) if params[:payment_method_id]
       @payment_method ||= Spree::PaymentMethod.find_by_type("Spree::BillingIntegration::SaferpayPayment")
     end
 
