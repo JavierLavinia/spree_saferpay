@@ -2,11 +2,12 @@ class Spree::BillingIntegration::SaferpayPayment < Spree::BillingIntegration
   preference :endpoint, :string, default: ::Saferpay::Configuration::DEFAULTS[:endpoint]
   preference :user_agent, :string, default: ::Saferpay::Configuration::DEFAULTS[:user_agent]
   preference :account_id, :string, default: ::Saferpay::Configuration::DEFAULTS[:account_id]
+  preference :password, :string, default: 'XAjc3Kna' # Test account
   preference :currency, :string, default: "EUR"
 
   attr_accessible :preferred_endpoint, :preferred_user_agent,
-                  :preferred_account_id, :preferred_currency,
-                  :preferred_server, :preferred_test_mode
+                  :preferred_account_id, :preferred_password,
+                  :preferred_currency,:preferred_server, :preferred_test_mode
 
   def provider_class
     ::Saferpay::API
@@ -34,6 +35,10 @@ class Spree::BillingIntegration::SaferpayPayment < Spree::BillingIntegration
     provider.get_payment_url payment_options(order).merge(url_options)
   end
 
+  def complete_payment(params = {})
+    # We need to add account password
+    params.reverse_merge! spPassword: preferred_password
+    provider.complete_payment(params)
   end
 
   def credit(*args)
