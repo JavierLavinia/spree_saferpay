@@ -20,15 +20,20 @@ class Spree::BillingIntegration::SaferpayPayment < Spree::BillingIntegration
     false
   end
 
-  def payment_url(order, url_options = {})
-    payment_options = {
+  def payment_options order
+    {
       amount: amount_in_cents(order.total),
       currency: preferred_currency,
       description: "Order #{order.number}",
       langid: I18n.locale,
       orderid: order.number
-    }.merge url_options
-    provider.get_payment_url(payment_options)
+    }
+  end
+
+  def payment_url(order, url_options = {})
+    provider.get_payment_url payment_options(order).merge(url_options)
+  end
+
   end
 
   def credit(*args)
