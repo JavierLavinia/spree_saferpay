@@ -1,31 +1,53 @@
 module Spree
   Spree::CheckoutController.class_eval do
-    before_filter :redirect_to_saferpay_form_if_needed, :only => [:update]
+    before_filter :redirect_to_saferpay_form_if_needed, only: :update
+    skip_before_filter :verify_authenticity_token, only: :saferpay_notify
 
     # Receive a direct notification from the gateway
     def saferpay_notify
-      notify = ActiveMerchant::Billing::Integrations::Saferpay.notification(request.query_parameters)
-      @order ||= Order.find_by_number! ('R'+ params['ds_order'][1..9])
-      notify_acknowledge = notify.acknowledge(saferpay_credentials(payment_method))
-      if notify_acknowledge
-        #TODO add source to payment
-        unless @order.state == "complete"
+      logger.debug "============== SAFERPAY"
+      load_order
+      begin
+        data = payment_method.provider.handle_pay_confirm(params)
+
+        logger.debug "SAFERPAY data: #{data}"
+
+        status = payment_method.complete_payment(id: data[:id]) # Settle Payment
+        logger.debug "SAFERPAY status: #{status}"
+        if status[:successful]
+          #TODO add source to payment
+          unless @order.state == "complete"
+            @order.payments.destroy_all
+            order_upgrade
+            payment_upgrade
+          end
+          payment = Spree::Payment.find_by_order_id(@order)
+          payment.complete!
+        else
           @order.payments.destroy_all
-          order_upgrade
-          payment_upgrade
+          payment = @order.payments.create({:amount => @order.total,
+                                             :source_type => 'Spree:SaferpayCreditCard',
+                                             :payment_method => payment_method,
+                                             :state => 'processing',
+                                             :response_code => '',
+                                             :avs_response => 'Invalid payment data response.'},
+                                            :without_protection => true)
+          payment.failure!
         end
-        payment = Spree::Payment.find_by_order_id(@order)
-        payment.complete! if notify.complete?
-      else
+
+        render status: :ok
+      rescue Saferpay::Error => e
         @order.payments.destroy_all
         payment = @order.payments.create({:amount => @order.total,
                                            :source_type => 'Spree:SaferpayCreditCard',
                                            :payment_method => payment_method,
                                            :state => 'processing',
-                                           :response_code => notify.error_code,
-                                           :avs_response => notify.error_message[0..255]},
+                                           :response_code => e.class.name,
+                                           :avs_response => e.message},
                                           :without_protection => true)
         payment.failure!
+
+        render status: :error
       end
     end
 
@@ -100,7 +122,6 @@ module Spree
     end
 
     def order_upgrade
-      ## TODO refactor coz u don't need really @order.state = "payment"
       @order.state = "payment"
       @order.save
 
