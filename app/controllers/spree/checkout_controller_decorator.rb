@@ -5,23 +5,21 @@ module Spree
 
     # Receive a direct notification from the gateway
     def saferpay_notify
-      logger.debug "============== SAFERPAY"
+      http_status = :ok
       load_order
       begin
         data = payment_method.provider.handle_pay_confirm(params)
 
-        logger.debug "SAFERPAY data: #{data}"
-
         status = payment_method.complete_payment(id: data[:id]) # Settle Payment
-        logger.debug "SAFERPAY status: #{status}"
         if status[:successful]
-          #TODO add source to payment
           unless @order.state == "complete"
             @order.payments.destroy_all
             order_upgrade
             payment_upgrade
           end
           payment = Spree::Payment.find_by_order_id(@order)
+          payment.response_code = status[:result]
+          payment.avs_response = "#{status[:message]} (id: #{status[:id]})"
           payment.complete!
         else
           @order.payments.destroy_all
@@ -29,13 +27,11 @@ module Spree
                                              :source_type => 'Spree:SaferpayCreditCard',
                                              :payment_method => payment_method,
                                              :state => 'processing',
-                                             :response_code => '',
-                                             :avs_response => 'Invalid payment data response.'},
+                                             :response_code => status[:result],
+                                             :avs_response => "#{status[:message]} (id: #{status[:id]})"},
                                             :without_protection => true)
           payment.failure!
         end
-
-        render status: :ok
       rescue Saferpay::Error => e
         @order.payments.destroy_all
         payment = @order.payments.create({:amount => @order.total,
@@ -46,9 +42,9 @@ module Spree
                                            :avs_response => e.message},
                                           :without_protection => true)
         payment.failure!
-
-        render status: :error
+        http_status = :error
       end
+      render nothing: true, status: http_status
     end
 
     # Handle the incoming user
