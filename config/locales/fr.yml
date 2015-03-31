@@ -1,0 +1,7 @@
+# Sample localization file for English. Add more files in this directory for other locales.
+# See https://github.com/svenfuchs/rails-i18n/tree/master/rails%2Flocale for starting points.
+
+fr:
+  order_processed_successfully: "Votre commande a été traitée avec succès. Nous vous remercions de votre achat!"
+  manual_admin_advert: "Pour Manuel d'administration (en cas de doute, ne l'utilisez pas): toutes, finaliser (+ messagerie complète), défaire complète"
+  saferpay_order_description: "Commande %{order}"
