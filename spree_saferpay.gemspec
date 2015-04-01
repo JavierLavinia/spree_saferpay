@@ -2,7 +2,7 @@
 Gem::Specification.new do |s|
   s.platform    = Gem::Platform::RUBY
   s.name        = 'spree_saferpay'
-  s.version     = '2.3.0'
+  s.version     = '1.2.0'
   s.summary     = 'Adds Saferpay TPV as a Payment Method to Spree store'
   s.description = 'Saferpay is a payment gateway.'
   s.author    = 'Ruben Sierra'
