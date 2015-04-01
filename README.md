@@ -9,9 +9,10 @@ Based on https://github.com/picazoH/spree_sermepa Library by @picazoH
 Install
 =======
 
-Add the following line to your application's Gemfile.
+Add the following lines to your application's Gemfile.
 
 gem "spree_saferpay", github: 'simplelogica/spree_saferpay'
+gem 'saferpay', github: "simplelogica/saferpay-gem", branch: 'httparty-0.8.3'
 
 Configuring
 ===========
