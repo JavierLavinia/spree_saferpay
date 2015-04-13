@@ -50,7 +50,7 @@ module Spree
     # Handle the incoming user
     def saferpay_confirm
       load_order
-      payment_upgrade() unless @order.state == "complete"
+      payment_upgrade() unless @order.completed?
       flash[:notice] = I18n.t(:order_processed_successfully)
       redirect_to completion_route
     end
@@ -133,7 +133,6 @@ module Spree
     end
 
     def payment_upgrade
-      #payment_method = Spree::PaymentMethod.find_by_type("Spree::BillingIntegration::SaferpayPayment")
       payment = @order.payments.create({:amount => @order.total,
                                         :source_type => 'Spree:SaferpayCreditCard',
                                         :payment_method => payment_method },
