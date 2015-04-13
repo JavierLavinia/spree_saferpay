@@ -103,7 +103,7 @@ module Spree
 
     def order_url_options order, payment_method_id
       {
-        successlink: saferpay_confirm_order_checkout_url(order, state: :payment),
+        successlink: saferpay_confirm_order_checkout_url(order),
         faillink: edit_order_checkout_url(order, state: :payment),
         backlink: edit_order_checkout_url(order, state: :payment),
         notifyurl: saferpay_notify_order_checkout_url(order, payment_method_id: payment_method_id)
