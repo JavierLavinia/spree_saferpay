@@ -50,8 +50,7 @@ module Spree
     # Handle the incoming user
     def saferpay_confirm
       load_order
-      order_upgrade()
-      payment_upgrade()
+      payment_upgrade() unless @order.state == "complete"
       flash[:notice] = I18n.t(:order_processed_successfully)
       redirect_to completion_route
     end
