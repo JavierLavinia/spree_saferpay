@@ -23,11 +23,12 @@ class Spree::BillingIntegration::SaferpayPayment < Spree::BillingIntegration
 
   def payment_options order
     {
-      amount: amount_in_cents(order.total),
-      currency: preferred_currency,
-      description: I18n.t(:saferpay_order_description, order: order.number),
-      langid: I18n.locale,
-      orderid: order.number
+      "ACCOUNTID" => preferred_account_id,
+      "AMOUNT" => amount_in_cents(order.total),
+      "CURRENCY" => preferred_currency,
+      "DESCRIPTION" => I18n.t(:saferpay_order_description, order: order.number),
+      "LANGID" => I18n.locale,
+      "ORDERID" => order.number
     }
   end
 
