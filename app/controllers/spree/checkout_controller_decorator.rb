@@ -8,7 +8,8 @@ module Spree
       http_status = :ok
       load_order
       begin
-        data = payment_method.provider.handle_pay_confirm(params)
+        original_params = payment_method.payment_options(@order)
+        data = payment_method.provider.handle_pay_confirm(params, original_params)
 
         status = payment_method.complete_payment(id: data[:id]) # Settle Payment
         if status[:successful]
