@@ -37,9 +37,11 @@ class Spree::BillingIntegration::SaferpayPayment < Spree::BillingIntegration
   end
 
   def complete_payment(params = {})
-    # We need to add account password
-    params.reverse_merge! spPassword: preferred_password
-    provider.complete_payment(params)
+    # We need to add account
+    account_params = { "ACCOUNTID" => preferred_account_id }
+    # And password justo for test account
+    account_params.merge!(spPassword: preferred_password) if preferred_test_mode
+    provider.complete_payment(params.merge(account_params))
   end
 
   def credit(*args)
