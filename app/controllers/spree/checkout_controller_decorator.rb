@@ -12,26 +12,31 @@ module Spree
         data = payment_method.provider.handle_pay_confirm(params, original_params)
 
         status = payment_method.complete_payment(id: data[:id]) # Settle Payment
-        if status[:successful]
-          unless @order.state == "complete"
+        # Lock the order to avoid simultaneous payments creation
+        # with simultaneous saferpay_confirm requests
+        @order.with_lock do
+          @order.reload
+          if status[:successful]
+            unless @order.state == "complete"
+              @order.payments.destroy_all
+              order_upgrade
+              payment_upgrade
+            end
+            payment = Spree::Payment.find_by_order_id(@order)
+            payment.response_code = status[:result]
+            payment.avs_response = "#{status[:message]} (id: #{status[:id]})"
+            payment.complete!
+          else
             @order.payments.destroy_all
-            order_upgrade
-            payment_upgrade
+            payment = @order.payments.create({:amount => @order.total,
+                                               :source_type => 'Spree:SaferpayCreditCard',
+                                               :payment_method => payment_method,
+                                               :state => 'processing',
+                                               :response_code => status[:result],
+                                               :avs_response => "#{status[:message]} (id: #{status[:id]})"},
+                                              :without_protection => true)
+            payment.failure!
           end
-          payment = Spree::Payment.find_by_order_id(@order)
-          payment.response_code = status[:result]
-          payment.avs_response = "#{status[:message]} (id: #{status[:id]})"
-          payment.complete!
-        else
-          @order.payments.destroy_all
-          payment = @order.payments.create({:amount => @order.total,
-                                             :source_type => 'Spree:SaferpayCreditCard',
-                                             :payment_method => payment_method,
-                                             :state => 'processing',
-                                             :response_code => status[:result],
-                                             :avs_response => "#{status[:message]} (id: #{status[:id]})"},
-                                            :without_protection => true)
-          payment.failure!
         end
       rescue Saferpay::Error => e
         @order.payments.destroy_all
@@ -51,7 +56,12 @@ module Spree
     # Handle the incoming user
     def saferpay_confirm
       load_order
-      payment_upgrade() unless @order.completed?
+      # Lock the order to avoid simultaneous payments creation
+      # with simultaneous saferpay_notify requests
+      @order.with_lock do
+        @order.reload
+        payment_upgrade unless @order.completed?
+      end
       flash[:notice] = I18n.t(:order_processed_successfully)
       redirect_to completion_route
     end
