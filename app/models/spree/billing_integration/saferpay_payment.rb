@@ -41,7 +41,17 @@ class Spree::BillingIntegration::SaferpayPayment < Spree::BillingIntegration
     account_params = { "ACCOUNTID" => preferred_account_id }
     # And password justo for test account
     account_params.merge!(spPassword: preferred_password) if preferred_test_mode
-    provider.complete_payment(params.merge(account_params))
+
+    begin
+      # 40 seconds of timeout, to avoid the request die
+      Timeout::timeout(40) do
+        provider.complete_payment(params.merge(account_params))
+      end
+    rescue Timeout::Error
+      # The paymant successful but we get timeout on our confirm
+      { successful: true, result: 'Timeout',
+        message: 'Timeout for PayCompleteV2 request', id: 'UNKNOW' }
+    end
   end
 
   def credit(*args)
